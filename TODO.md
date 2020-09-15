@@ -1,0 +1,2 @@
+- check https://github.com/astronouth7303/xontrib-z/pull/9/commits/6a5ff1af723cd3ce9001d24d0a30e733ddd47461
+- zoxide like features (`cd`, query, fzf, ...)

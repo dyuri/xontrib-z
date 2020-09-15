@@ -40,7 +40,7 @@ class ZHandler:
         from argparse import ArgumentParser
         parser = ArgumentParser(prog='z', description=__doc__)
 
-        parser.add_argument('patterns', metavar='REGEX', nargs='+',
+        parser.add_argument('patterns', metavar='REGEX', nargs='*',
                             help='Names to match')
 
         parser.add_argument('-c', default=False,
@@ -57,9 +57,6 @@ class ZHandler:
         actions.add_argument('-x', const='remove', default='cd',
                            action='store_const', dest='action',
                            help='remove the current directory from the datafile')
-        # actions.add_argument('-h', const='help', default='cd',
-        #                    action='store_const', dest='action',
-        #                    help='show a brief help message')
 
         modes = parser.add_mutually_exclusive_group()
         modes.add_argument('-r', const='rank', default='frecency',
@@ -145,7 +142,7 @@ class ZHandler:
             self.parser.print_help()
             return
         elif args.action == 'remove':
-            self.remove(self.pwd())
+            self.remove(self.getpwd())
             return
 
         data = list(self.load_data())
@@ -167,8 +164,11 @@ class ZHandler:
         pats = list(map(re.compile, args.patterns))  # Used repeatedly, pre-evaluate
         data = list(filter(functools.partial(self._doesitmatch, pats), data))
 
-        if not data and args.action != 'list':
-            return "", "No matches found\n", 1
+        if not data:
+            if args.action == 'echo':
+                return "", "No matches found\n", 1
+            elif args.action == 'cd':
+                return built_ins.builtins.aliases['cd'](args.patterns)
 
         if args.action == 'cd':
             built_ins.builtins.aliases['cd']([data[0].path])
@@ -215,7 +215,7 @@ class ZHandler:
     def handler(cls, args, stdin=None):
         return cls()(args, stdin)
 
-@events.on_postcommand
+@events.on_chdir
 def cmd_handler(**kwargs):
     self = ZHandler()
     self.add(self.getpwd())
